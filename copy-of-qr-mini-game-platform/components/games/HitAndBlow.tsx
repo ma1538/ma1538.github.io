@@ -7,7 +7,7 @@ interface HitAndBlowProps {
 }
 
 type Turn = 'PLAYER' | 'CPU';
-type Phase = 'SETUP' | 'PLAYING' | 'RESULT';
+type Phase = 'SETUP' | 'PLAYING';
 
 interface HistoryItem {
   turn: Turn;
@@ -29,14 +29,13 @@ export const HitAndBlow: React.FC<HitAndBlowProps> = ({ onGameEnd }) => {
   const cpuCandidates = useRef<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const isUniqueDigits = (numStr: string) =>
-    new Set(numStr).size === numStr.length;
+  const isUniqueDigits = (s: string) => new Set(s).size === s.length;
 
   const calculateHB = (secret: string, guess: string) => {
     let hit = 0;
     let blow = 0;
     for (let i = 0; i < 3; i++) {
-      if (guess[i] === secret[i]) hit++;
+      if (secret[i] === guess[i]) hit++;
       else if (secret.includes(guess[i])) blow++;
     }
     return { hit, blow };
@@ -69,9 +68,7 @@ export const HitAndBlow: React.FC<HitAndBlowProps> = ({ onGameEnd }) => {
     }
   };
 
-  const handleDelete = () => {
-    setInputBuffer(prev => prev.slice(0, -1));
-  };
+  const handleDelete = () => setInputBuffer(prev => prev.slice(0, -1));
 
   const handleEnter = () => {
     if (inputBuffer.length !== 3 || !isUniqueDigits(inputBuffer)) return;
@@ -80,20 +77,18 @@ export const HitAndBlow: React.FC<HitAndBlowProps> = ({ onGameEnd }) => {
       setPlayerSecret(inputBuffer);
       setInputBuffer('');
       setPhase('PLAYING');
-      setMessage('あなたのターンです。相手の数字を予想してください。');
+      setMessage('あなたのターンです');
       return;
     }
 
-    if (phase === 'PLAYING' && currentTurn === 'PLAYER') {
+    if (currentTurn === 'PLAYER') {
       const result = calculateHB(cpuSecret, inputBuffer);
       setHistory(prev => [...prev, { turn: 'PLAYER', guess: inputBuffer, ...result }]);
       setInputBuffer('');
 
       if (result.hit === 3) {
-        const attempts = history.filter(h => h.turn === 'PLAYER').length + 1;
-        const score = Math.max(0, 500 - attempts * 50);
         setTimeout(() => {
-          onGameEnd({ score, timestamp: Date.now(), metadata: { winner: 'PLAYER', attempts } });
+          onGameEnd({ score: 300, timestamp: Date.now(), metadata: { winner: 'PLAYER' } });
         }, 800);
         return;
       }
@@ -105,31 +100,17 @@ export const HitAndBlow: React.FC<HitAndBlowProps> = ({ onGameEnd }) => {
   };
 
   useEffect(() => {
-    if (currentTurn !== 'CPU' || phase !== 'PLAYING' || !playerSecret) return;
+    if (currentTurn !== 'CPU' || phase !== 'PLAYING') return;
 
     const timer = setTimeout(() => {
-      const lastCpuMove = [...history].reverse().find(h => h.turn === 'CPU');
-      if (lastCpuMove) {
-        cpuCandidates.current = cpuCandidates.current.filter(cand => {
-          const { hit, blow } = calculateHB(cand, lastCpuMove.guess);
-          return hit === lastCpuMove.hit && blow === lastCpuMove.blow;
-        });
-      }
+      const next = cpuCandidates.current[Math.floor(Math.random() * cpuCandidates.current.length)];
+      cpuCandidates.current = cpuCandidates.current.filter(c => c !== next);
 
-      const candidates = cpuCandidates.current.length
-        ? cpuCandidates.current
-        : generateCandidates();
-
-      const nextGuess = candidates[Math.floor(Math.random() * candidates.length)];
-      cpuCandidates.current = cpuCandidates.current.filter(c => c !== nextGuess);
-
-      const result = calculateHB(playerSecret, nextGuess);
-      setHistory(prev => [...prev, { turn: 'CPU', guess: nextGuess, ...result }]);
+      const result = calculateHB(playerSecret, next);
+      setHistory(prev => [...prev, { turn: 'CPU', guess: next, ...result }]);
 
       if (result.hit === 3) {
-        setTimeout(() => {
-          onGameEnd({ score: 0, timestamp: Date.now(), metadata: { winner: 'CPU' } });
-        }, 800);
+        onGameEnd({ score: 0, timestamp: Date.now(), metadata: { winner: 'CPU' } });
       } else {
         setCpuThinking(false);
         setCurrentTurn('PLAYER');
@@ -138,79 +119,79 @@ export const HitAndBlow: React.FC<HitAndBlowProps> = ({ onGameEnd }) => {
     }, 1200);
 
     return () => clearTimeout(timer);
-  }, [currentTurn, phase, history, playerSecret, generateCandidates, onGameEnd]);
+  }, [currentTurn, phase, playerSecret, onGameEnd]);
 
   return (
-    <div className="flex flex-col h-dvh overflow-hidden bg-gray-900 text-gray-100">
-      {/* Header */}
-      <div className="shrink-0 p-4 bg-gray-800/50 border-b border-gray-700 flex justify-between">
-        <span className="font-mono">{playerSecret || '???'}</span>
-        <span className="text-gray-500">VS</span>
-        <span className="text-gray-600">CPU</span>
-      </div>
+    /* ===== 全体（黒い余白 20%） ===== */
+    <div className="w-full h-dvh bg-black flex items-center justify-center overflow-hidden">
 
-      {/* History (scroll only here) */}
-      <div className="flex-1 relative overflow-hidden bg-gray-950">
-        <div ref={scrollRef} className="absolute inset-0 overflow-y-auto p-4 space-y-3">
-          {phase === 'SETUP' && (
-            <div className="h-full flex items-center justify-center text-center text-gray-400">
-              3桁の数字を決めてください
-            </div>
-          )}
+      {/* ===== 中央 60% ゲーム画面 ===== */}
+      <div className="w-[60%] h-[60%] bg-gray-900 text-gray-100 flex flex-col rounded-xl overflow-hidden shadow-2xl">
 
-          {history.map((h, i) => (
-            <div key={i} className={`flex ${h.turn === 'PLAYER' ? 'justify-end' : 'justify-start'}`}>
-              <div className="px-4 py-2 rounded-xl bg-gray-800">
-                <div className="font-mono text-lg">{h.guess}</div>
-                <div className="text-sm">{h.hit}H {h.blow}B</div>
+        {/* Header */}
+        <div className="shrink-0 p-3 bg-gray-800 border-b border-gray-700 flex justify-between text-sm">
+          <span>{playerSecret || '???'}</span>
+          <span className="text-gray-500">VS</span>
+          <span className="text-gray-400">CPU</span>
+        </div>
+
+        {/* History */}
+        <div className="flex-1 relative overflow-hidden bg-gray-950">
+          <div ref={scrollRef} className="absolute inset-0 p-3 overflow-y-auto space-y-2">
+            {history.map((h, i) => (
+              <div key={i} className={`flex ${h.turn === 'PLAYER' ? 'justify-end' : 'justify-start'}`}>
+                <div className="bg-gray-800 px-3 py-1.5 rounded-lg text-sm">
+                  <span className="font-mono">{h.guess}</span>
+                  <span className="ml-2 text-yellow-400">{h.hit}H</span>
+                  <span className="ml-1 text-blue-400">{h.blow}B</span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+
+          <div className="absolute bottom-2 inset-x-2 text-center pointer-events-none">
+            <span className="text-xs bg-black/60 px-3 py-1 rounded-full">
+              {message}
+            </span>
+          </div>
         </div>
 
-        <div className="absolute bottom-4 inset-x-4 text-center pointer-events-none">
-          <span className="text-xs bg-black/60 px-3 py-1 rounded-full">{message}</span>
-        </div>
-      </div>
+        {/* Keypad */}
+        <div className="shrink-0 p-2 border-t border-gray-800 bg-gray-900">
+          <div className="flex justify-center gap-1 mb-2">
+            {[0, 1, 2].map(i => (
+              <div key={i} className="w-8 h-10 border border-gray-700 flex items-center justify-center">
+                {inputBuffer[i]}
+              </div>
+            ))}
+          </div>
 
-      {/* Keypad */}
-      <div
-        className="shrink-0 border-t border-gray-800 bg-gray-900 p-2"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-      >
-        <div className="flex justify-center gap-2 mb-2">
-          {[0, 1, 2].map(i => (
-            <div key={i} className="w-10 h-12 border border-gray-700 flex items-center justify-center">
-              {inputBuffer[i]}
-            </div>
-          ))}
-        </div>
+          <div className="grid grid-cols-5 gap-1">
+            {[1,2,3,4,5,6,7,8,9,0].map(n => (
+              <button
+                key={n}
+                onClick={() => handleKeyInput(n.toString())}
+                className="h-10 bg-gray-800 rounded text-sm"
+              >
+                {n}
+              </button>
+            ))}
+          </div>
 
-        <div className="grid grid-cols-5 gap-2 max-w-md mx-auto">
-          {[1,2,3,4,5,6,7,8,9,0].map(n => (
-            <button
-              key={n}
-              onClick={() => handleKeyInput(n.toString())}
-              disabled={inputBuffer.includes(n.toString())}
-              className="h-12 rounded bg-gray-800 text-white"
-            >
-              {n}
+          <div className="grid grid-cols-2 gap-1 mt-2">
+            <button onClick={handleDelete} className="h-10 bg-gray-800 rounded">
+              <Delete size={16} />
             </button>
-          ))}
+            <button
+              onClick={handleEnter}
+              disabled={inputBuffer.length !== 3}
+              className="h-10 bg-indigo-600 rounded flex items-center justify-center gap-1 text-sm"
+            >
+              <Check size={16} /> OK
+            </button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 mt-2 max-w-md mx-auto">
-          <button onClick={handleDelete} className="h-12 bg-gray-800 rounded">
-            <Delete />
-          </button>
-          <button
-            onClick={handleEnter}
-            disabled={inputBuffer.length !== 3}
-            className="h-12 bg-indigo-600 rounded flex items-center justify-center gap-2"
-          >
-            <Check /> DECIDE
-          </button>
-        </div>
       </div>
     </div>
   );
