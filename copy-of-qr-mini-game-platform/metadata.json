@@ -1,0 +1,5 @@
+{
+  "name": "Copy of QR Mini Game Platform",
+  "description": "QRコードから起動するスマートフォン向けミニゲーム実行プラットフォーム。リソースローダーとゲーム実行環境を提供します。",
+  "requestFramePermissions": []
+}
