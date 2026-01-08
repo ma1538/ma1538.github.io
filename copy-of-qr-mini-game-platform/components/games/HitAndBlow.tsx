@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GameResult } from '../../types';
-import { Delete, Check, User, Cpu, ShieldQuestion } from 'lucide-react';
+import { Delete, Check } from 'lucide-react';
 
 interface HitAndBlowProps {
   onGameEnd: (result: GameResult) => void;
@@ -122,11 +122,11 @@ export const HitAndBlow: React.FC<HitAndBlowProps> = ({ onGameEnd }) => {
   }, [currentTurn, phase, playerSecret, onGameEnd]);
 
   return (
-    /* ===== 全体（黒い余白） ===== */
-    <div className="w-full h-dvh bg-black flex items-center justify-center overflow-hidden">
+    /* ===== 全体（スクロール可能に変更） ===== */
+    <div className="w-full min-h-screen bg-black flex flex-col items-center py-10 overflow-y-auto">
 
-      {/* ===== 中央 ゲーム画面（高さのみ56%に変更） ===== */}
-      <div className="w-[80%] h-[56%] bg-gray-900 text-gray-100 flex flex-col rounded-xl overflow-hidden shadow-2xl">
+      {/* ===== 中央 ゲーム画面（固定サイズではなく、自然な高さに） ===== */}
+      <div className="w-[85%] max-w-md bg-gray-900 text-gray-100 flex flex-col rounded-xl shadow-2xl overflow-hidden border border-gray-800">
 
         {/* Header */}
         <div className="shrink-0 p-3 bg-gray-800 border-b border-gray-700 flex justify-between text-sm">
@@ -135,8 +135,8 @@ export const HitAndBlow: React.FC<HitAndBlowProps> = ({ onGameEnd }) => {
           <span className="text-gray-400">CPU</span>
         </div>
 
-        {/* History */}
-        <div className="flex-1 relative overflow-hidden bg-gray-950">
+        {/* History (高さを固定し、内部スクロールは維持しつつ、画面全体のスクロールも阻害しない) */}
+        <div className="h-64 relative bg-gray-950 border-b border-gray-800">
           <div ref={scrollRef} className="absolute inset-0 p-3 overflow-y-auto space-y-2">
             {history.map((h, i) => (
               <div key={i} className={`flex ${h.turn === 'PLAYER' ? 'justify-end' : 'justify-start'}`}>
@@ -148,7 +148,6 @@ export const HitAndBlow: React.FC<HitAndBlowProps> = ({ onGameEnd }) => {
               </div>
             ))}
           </div>
-
           <div className="absolute bottom-2 inset-x-2 text-center pointer-events-none">
             <span className="text-xs bg-black/60 px-3 py-1 rounded-full">
               {message}
@@ -157,37 +156,37 @@ export const HitAndBlow: React.FC<HitAndBlowProps> = ({ onGameEnd }) => {
         </div>
 
         {/* Keypad */}
-        <div className="shrink-0 p-2 border-t border-gray-800 bg-gray-900">
-          <div className="flex justify-center gap-1 mb-2">
+        <div className="shrink-0 p-4 bg-gray-900">
+          <div className="flex justify-center gap-2 mb-4">
             {[0, 1, 2].map(i => (
-              <div key={i} className="w-8 h-10 border border-gray-700 flex items-center justify-center">
+              <div key={i} className="w-10 h-12 border border-gray-700 flex items-center justify-center text-xl font-bold rounded bg-gray-950">
                 {inputBuffer[i]}
               </div>
             ))}
           </div>
 
-          <div className="grid grid-cols-5 gap-1">
+          <div className="grid grid-cols-5 gap-2">
             {[1,2,3,4,5,6,7,8,9,0].map(n => (
               <button
                 key={n}
                 onClick={() => handleKeyInput(n.toString())}
-                className="h-10 bg-gray-800 rounded text-sm"
+                className="h-12 bg-gray-800 rounded text-lg font-medium active:bg-gray-700 transition-colors"
               >
                 {n}
               </button>
             ))}
           </div>
 
-          <div className="grid grid-cols-2 gap-1 mt-2">
-            <button onClick={handleDelete} className="h-10 bg-gray-800 rounded">
-              <Delete size={16} />
+          <div className="grid grid-cols-2 gap-2 mt-4">
+            <button onClick={handleDelete} className="h-12 bg-gray-800 rounded flex items-center justify-center hover:bg-gray-700">
+              <Delete size={20} />
             </button>
             <button
               onClick={handleEnter}
               disabled={inputBuffer.length !== 3}
-              className="h-10 bg-indigo-600 rounded flex items-center justify-center gap-1 text-sm"
+              className="h-12 bg-indigo-600 rounded flex items-center justify-center gap-2 text-sm font-bold hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Check size={16} /> OK
+              <Check size={20} /> 決定
             </button>
           </div>
         </div>

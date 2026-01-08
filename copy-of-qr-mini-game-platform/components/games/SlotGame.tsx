@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { GameResult } from '../../types';
 import { CircleDollarSign, Coins, RotateCw, Delete, Play, DoorOpen } from 'lucide-react';
 
@@ -17,36 +16,11 @@ interface SymbolInfo {
 }
 
 const SYMBOLS: Record<SymbolType, SymbolInfo> = {
-  '7': { 
-    type: '7', 
-    display: <span className="text-red-600 font-black">7</span>, 
-    label: '7', 
-    color: 'text-red-600' 
-  },
-  'WM': { 
-    type: 'WM', 
-    display: <span>🍉</span>, 
-    label: 'WM', 
-    color: 'text-green-500' 
-  },
-  'BL': { 
-    type: 'BL', 
-    display: <span>🔔</span>, 
-    label: 'BL', 
-    color: 'text-yellow-400' 
-  },
-  'RP': { 
-    type: 'RP', 
-    display: <span>🔄</span>, 
-    label: 'RP', 
-    color: 'text-blue-400' 
-  },
-  'BLANK': { 
-    type: 'BLANK', 
-    display: <span>💎</span>, 
-    label: '??', 
-    color: 'text-gray-400' 
-  },
+  '7': { type: '7', display: <span className="text-red-600 font-black">7</span>, label: '7', color: 'text-red-600' },
+  'WM': { type: 'WM', display: <span>🍉</span>, label: 'WM', color: 'text-green-500' },
+  'BL': { type: 'BL', display: <span>🔔</span>, label: 'BL', color: 'text-yellow-400' },
+  'RP': { type: 'RP', display: <span>🔄</span>, label: 'RP', color: 'text-blue-400' },
+  'BLANK': { type: 'BLANK', display: <span>💎</span>, label: '??', color: 'text-gray-400' },
 };
 
 const ALL_SYMBOL_TYPES: SymbolType[] = ['7', 'WM', 'BL', 'RP'];
@@ -61,19 +35,13 @@ export const SlotGame: React.FC<SlotGameProps> = ({ onGameEnd }) => {
   const [lastWin, setLastWin] = useState<number | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
 
-  // 当選判定ロジック
   const determineResult = useCallback((): { result: SymbolType[], multiplier: number } => {
     const r = Math.floor(Math.random() * 100);
-    
-    if (r < 5) { // 5% 7
-      return { result: ['7', '7', '7'], multiplier: 5 };
-    } else if (r < 15) { // 10% WM
-      return { result: ['WM', 'WM', 'WM'], multiplier: 3 };
-    } else if (r < 35) { // 20% BL
-      return { result: ['BL', 'BL', 'BL'], multiplier: 2 };
-    } else if (r < 50) { // 15% RP
-      return { result: ['RP', 'RP', 'RP'], multiplier: 1 };
-    } else { // 50% はずれ
+    if (r < 5) return { result: ['7', '7', '7'], multiplier: 5 };
+    else if (r < 15) return { result: ['WM', 'WM', 'WM'], multiplier: 3 };
+    else if (r < 35) return { result: ['BL', 'BL', 'BL'], multiplier: 2 };
+    else if (r < 50) return { result: ['RP', 'RP', 'RP'], multiplier: 1 };
+    else {
       let res: SymbolType[] = [];
       do {
         res = [
@@ -89,7 +57,6 @@ export const SlotGame: React.FC<SlotGameProps> = ({ onGameEnd }) => {
   const handleSpin = () => {
     const bet = parseInt(currentBetInput);
     if (isNaN(bet) || bet < 1 || bet > MAX_BET) return;
-
     setIsSpinning(true);
     setPhase('SPINNING');
     setLastWin(null);
@@ -118,36 +85,29 @@ export const SlotGame: React.FC<SlotGameProps> = ({ onGameEnd }) => {
   };
 
   const handleNext = () => {
-    if (spinsLeft === 0) {
-      onGameEnd({ score: totalScore, timestamp: Date.now() });
-    } else {
+    if (spinsLeft === 0) onGameEnd({ score: totalScore, timestamp: Date.now() });
+    else {
       setPhase('BETTING');
       setCurrentBetInput('');
       setLastWin(null);
     }
   };
 
-  const handleQuit = () => {
-    onGameEnd({ score: totalScore, timestamp: Date.now() });
-  };
+  const handleQuit = () => onGameEnd({ score: totalScore, timestamp: Date.now() });
 
   const addDigit = (digit: string) => {
     if (currentBetInput.length >= 3) return;
     const newVal = currentBetInput + digit;
     const numVal = parseInt(newVal);
-    if (numVal > MAX_BET) {
-      setCurrentBetInput(MAX_BET.toString());
-    } else {
-      setCurrentBetInput(newVal);
-    }
+    if (numVal > MAX_BET) setCurrentBetInput(MAX_BET.toString());
+    else setCurrentBetInput(newVal);
   };
 
-  const removeDigit = () => {
-    setCurrentBetInput(prev => prev.slice(0, -1));
-  };
+  const removeDigit = () => setCurrentBetInput(prev => prev.slice(0, -1));
 
   return (
-    <div className="flex flex-col h-full bg-slate-950 text-white relative overflow-hidden">
+    // overflow-hidden 削除, min-h-screen 追加
+    <div className="flex flex-col min-h-screen bg-slate-950 text-white relative">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(184,134,11,0.15),_transparent_70%)]" />
       
       <div className="relative z-10 flex justify-between items-center p-4 bg-black/40 border-b border-yellow-600/30">
@@ -170,7 +130,7 @@ export const SlotGame: React.FC<SlotGameProps> = ({ onGameEnd }) => {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center p-4 gap-6 relative z-10">
+      <div className="flex-1 flex flex-col items-center justify-center p-4 gap-6 relative z-10 my-6">
         <div className="w-full max-w-sm aspect-[2/1] bg-gradient-to-b from-gray-800 to-black p-2 rounded-2xl border-4 border-yellow-600 shadow-[0_0_30px_rgba(202,138,4,0.3)]">
           <div className="h-full grid grid-cols-3 gap-2 bg-gray-900 rounded-lg overflow-hidden border-2 border-black">
             {reels.map((symbol, i) => (
@@ -199,7 +159,7 @@ export const SlotGame: React.FC<SlotGameProps> = ({ onGameEnd }) => {
 
         <div className="w-full max-w-sm space-y-4">
           {phase === 'BETTING' ? (
-            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
+            <div className="space-y-4">
               <div className="flex justify-center items-center gap-4">
                  <div className="bg-black/60 border-2 border-yellow-600/50 rounded-xl px-6 py-3 flex items-center gap-3">
                    <CircleDollarSign className="text-yellow-500" size={24} />
@@ -248,7 +208,7 @@ export const SlotGame: React.FC<SlotGameProps> = ({ onGameEnd }) => {
               </button>
             </div>
           ) : phase === 'RESULT' ? (
-            <div className="animate-in fade-in zoom-in-95">
+            <div>
               <button
                 onClick={handleNext}
                 className="w-full h-16 bg-white text-black rounded-2xl flex items-center justify-center gap-3 font-black text-2xl transition-all shadow-xl active:scale-95 border-b-4 border-gray-300"
@@ -269,7 +229,7 @@ export const SlotGame: React.FC<SlotGameProps> = ({ onGameEnd }) => {
         </div>
       </div>
 
-      <div className="p-4 bg-black/60 border-t border-yellow-600/30 grid grid-cols-4 gap-2 relative z-10">
+      <div className="p-4 bg-black/60 border-t border-yellow-600/30 grid grid-cols-4 gap-2 relative z-10 mt-auto">
         <div className="flex flex-col items-center">
           <span className="text-xs font-bold text-red-600">777</span>
           <span className="text-[10px] font-bold text-yellow-500">x5</span>

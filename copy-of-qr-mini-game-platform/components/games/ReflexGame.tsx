@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GameResult } from '../../types';
-import { Target, CircleX } from 'lucide-react';
 
 interface ReflexGameProps {
   onGameEnd: (result: GameResult) => void;
@@ -15,7 +14,7 @@ interface TargetItem {
   createdAt: number;
 }
 
-const GAME_DURATION = 15; // 秒
+const GAME_DURATION = 15;
 
 export const ReflexGame: React.FC<ReflexGameProps> = ({ onGameEnd }) => {
   const [score, setScore] = useState(0);
@@ -53,10 +52,14 @@ export const ReflexGame: React.FC<ReflexGameProps> = ({ onGameEnd }) => {
     const spawnRate = 600;
     const spawner = setInterval(() => {
       if (containerRef.current) {
+        // スクロール可能なエリア全体ではなく、現在見えている範囲、あるいはコンテナ範囲内に生成
         const { width, height } = containerRef.current.getBoundingClientRect();
+        // コンテナの高さが0の場合の対策（念のため）
+        const effectiveHeight = height || 400; 
+
         const size = Math.random() * 40 + 40;
         const x = Math.random() * (width - size);
-        const y = Math.random() * (height - size);
+        const y = Math.random() * (effectiveHeight - size);
         
         const colors = ['bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-400'];
         const randomColor = colors[Math.floor(Math.random() * colors.length)];
@@ -83,18 +86,15 @@ export const ReflexGame: React.FC<ReflexGameProps> = ({ onGameEnd }) => {
 
   const handleTargetClick = useCallback((id: number) => {
     if (!gameActive) return;
-    
-    if (navigator.vibrate) {
-      navigator.vibrate(10);
-    }
-
+    if (navigator.vibrate) navigator.vibrate(10);
     setScore(prev => prev + 100);
     setTargets(prev => prev.filter(t => t.id !== id));
   }, [gameActive]);
 
   return (
-    <div className="relative w-full h-full bg-gray-900 overflow-hidden select-none">
-      <div className="absolute top-0 left-0 w-full p-4 flex justify-between items-start z-20 pointer-events-none">
+    // overflow-hidden 削除、min-h-screen 追加
+    <div className="relative w-full min-h-screen bg-gray-900 select-none">
+      <div className="absolute top-0 left-0 w-full p-4 flex justify-between items-start z-20 pointer-events-none sticky top-0">
         <div className="bg-black/50 backdrop-blur px-4 py-2 rounded-lg border border-white/10">
           <div className="text-xs text-gray-400">SCORE</div>
           <div className="text-2xl font-mono font-bold text-white">{score.toLocaleString()}</div>
@@ -110,7 +110,8 @@ export const ReflexGame: React.FC<ReflexGameProps> = ({ onGameEnd }) => {
 
       <div 
         ref={containerRef} 
-        className="w-full h-full relative touch-none"
+        // overflow-hidden があった場合は削除し、画面高さ以上を確保
+        className="w-full min-h-screen relative touch-none"
       >
         {targets.map((target) => (
           <button

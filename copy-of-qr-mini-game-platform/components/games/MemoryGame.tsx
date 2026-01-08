@@ -27,7 +27,7 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onGameEnd }) => {
 
   // ゲーム初期化
   const initGame = useCallback(() => {
-    const pairsCount = 6; // 12枚なので6ペア
+    const pairsCount = 6; 
     const selectedRanks = [...RANKS].sort(() => Math.random() - 0.5).slice(0, pairsCount);
     
     let deck: Card[] = [];
@@ -39,7 +39,6 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onGameEnd }) => {
       deck.push({ id: index * 2 + 1, rank, suit: suit2, isFlipped: false, isMatched: false });
     });
 
-    // シャッフル
     deck = deck.sort(() => Math.random() - 0.5);
     setCards(deck);
     setMistakes(0);
@@ -52,7 +51,6 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onGameEnd }) => {
     initGame();
   }, [initGame]);
 
-  // カードクリック処理
   const handleCardClick = (index: number) => {
     if (isProcessing || cards[index].isFlipped || cards[index].isMatched || flippedIndices.length >= 2) return;
 
@@ -68,13 +66,11 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onGameEnd }) => {
     }
   };
 
-  // 一致判定
   const checkMatch = (indices: number[]) => {
     setIsProcessing(true);
     const [first, second] = indices;
     
     if (cards[first].rank === cards[second].rank) {
-      // 一致
       setTimeout(() => {
         const newCards = [...cards];
         newCards[first].isMatched = true;
@@ -84,13 +80,11 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onGameEnd }) => {
         setFlippedIndices([]);
         setIsProcessing(false);
 
-        // 全クリア判定
         if (removedCount + 2 === 12) {
           endGame(removedCount + 2);
         }
       }, 600);
     } else {
-      // 不一致
       setTimeout(() => {
         const newCards = [...cards];
         newCards[first].isFlipped = false;
@@ -102,7 +96,6 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onGameEnd }) => {
         setFlippedIndices([]);
         setIsProcessing(false);
 
-        // ミス制限判定
         if (nextMistakes >= MAX_MISTAKES) {
           endGame(removedCount);
         }
@@ -129,8 +122,9 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onGameEnd }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-emerald-950 p-2 relative overflow-hidden">
-      {/* HUD: 右上のステータス表示 */}
+    // overflow-hidden を削除し、min-h-screen に変更
+    <div className="flex flex-col min-h-screen bg-emerald-950 p-4 relative">
+      {/* HUD: 固定位置のまま */}
       <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-20">
         <div className="bg-black/60 backdrop-blur px-2 py-1 rounded-lg border border-white/10 flex items-center gap-1.5 shadow-lg">
           <CircleAlert size={14} className="text-red-400" />
@@ -148,8 +142,8 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onGameEnd }) => {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center gap-3 mt-8">
-        <div className="grid grid-cols-4 gap-2 w-full max-w-sm px-2">
+      <div className="flex-1 flex flex-col items-center justify-center gap-6 mt-12 mb-8">
+        <div className="grid grid-cols-4 gap-3 w-full max-w-sm">
           {cards.map((card, index) => (
             <div
               key={index}
