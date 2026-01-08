@@ -125,8 +125,8 @@ export const HitAndBlow: React.FC<HitAndBlowProps> = ({ onGameEnd }) => {
     /* ===== 全体（黒い余白） ===== */
     <div className="w-full h-dvh bg-black flex items-center justify-center overflow-hidden">
 
-      {/* ===== 中央 80% ゲーム画面（変更箇所） ===== */}
-      <div className="w-[80%] h-[80%] bg-gray-900 text-gray-100 flex flex-col rounded-xl overflow-hidden shadow-2xl">
+      {/* ===== 中央 ゲーム画面（高さのみ56%に変更） ===== */}
+      <div className="w-[80%] h-[56%] bg-gray-900 text-gray-100 flex flex-col rounded-xl overflow-hidden shadow-2xl">
 
         {/* Header */}
         <div className="shrink-0 p-3 bg-gray-800 border-b border-gray-700 flex justify-between text-sm">
